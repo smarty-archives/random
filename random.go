@@ -4,10 +4,13 @@ package random
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"strings"
+	"time"
+
+	mathrand "math/rand"
 )
 
 // Random is meant be used as a pointer field on a struct. Leaving the
@@ -42,12 +45,18 @@ func (this *Random) Base62(length byte) string {
 		return _base62(length)
 	}
 }
-func (this *Random) Uint32() uint32 {
+func (this *Random) Uint32(min, max uint32) uint32 {
+	if min > max {
+		temp := max
+		max = min
+		min = temp
+	}
+
 	if this == nil {
-		return Uint32()
+		return Uint32(min, max)
 	} else {
 		this.Calls++
-		return 3214
+		return _uint32(min, max)
 	}
 }
 func (this *Random) Hex(length byte) string {
@@ -88,10 +97,12 @@ func Base64(length byte) string {
 	return base64.StdEncoding.EncodeToString(Bytes(length))
 }
 
-func Uint32() uint32 {
-	var value uint32
-	binary.Read(rand.Reader, binary.LittleEndian, &value)
-	return value
+func Uint32(min, max uint32) uint32 {
+	if value, err := rand.Int(rand.Reader, big.NewInt(int64(max-min+1))); err == nil {
+		return uint32(value.Int64()) + min
+	} else {
+		return min + uint32(mathrand.Intn(int(max-min+1))) // not enough entropy, use a pseudo-random number
+	}
 }
 
 // Base62 removes the '+', '/', and '=' characters from a base64 encoded string. This is useful for
@@ -134,6 +145,17 @@ func _base62(length byte) string {
 	value = strings.Replace(value, "=", "1", -1) // only necessary when length % 3 != 0
 	return value
 }
+func _uint32(min, max uint32) uint32 {
+	random := uint32(3214)
+
+	if random < min {
+		return min
+	} else if random > max {
+		return max
+	}
+
+	return random
+}
 func _hex(length byte) string {
 	raw := _bytes(length)
 	return hex.EncodeToString(raw)
@@ -153,4 +175,8 @@ func format(guid string) string {
 		guid[12:16],
 		guid[16:20],
 		guid[20:])
+}
+
+func init() {
+	mathrand.Seed(time.Now().UnixNano())
 }
