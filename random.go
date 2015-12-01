@@ -56,7 +56,7 @@ func (this *Random) Uint32(min, max uint32) uint32 {
 		return Uint32(min, max)
 	} else {
 		this.Calls++
-		return _uint32(min, max)
+		return _uint32(min+uint32(this.Calls)-1, max)
 	}
 }
 func (this *Random) Hex(length byte) string {
