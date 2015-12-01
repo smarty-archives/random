@@ -4,6 +4,7 @@ package random
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"strings"
@@ -39,6 +40,14 @@ func (this *Random) Base62(length byte) string {
 	} else {
 		this.Calls++
 		return _base62(length)
+	}
+}
+func (this *Random) Uint32() uint32 {
+	if this == nil {
+		return Uint32()
+	} else {
+		this.Calls++
+		return 3214
 	}
 }
 func (this *Random) Hex(length byte) string {
@@ -77,6 +86,12 @@ func Bytes(length byte) []byte {
 }
 func Base64(length byte) string {
 	return base64.StdEncoding.EncodeToString(Bytes(length))
+}
+
+func Uint32() uint32 {
+	var value uint32
+	binary.Read(rand.Reader, binary.LittleEndian, &value)
+	return value
 }
 
 // Base62 removes the '+', '/', and '=' characters from a base64 encoded string. This is useful for
